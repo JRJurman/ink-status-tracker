@@ -1,0 +1,248 @@
+<html>
+	<head>
+		<title>Ink Enemy Tracker</title>
+		<script src="https://unpkg.com/tram-deco@6"></script>
+		<script src="./components/ink-status-description.js"></script>
+
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Winky+Sans:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+
+		<style>
+			:root {
+				color-scheme: light dark;
+			}
+
+			body {
+				font-family: "Winky Sans", sans-serif;
+				font-optical-sizing: auto;
+				font-style: normal;
+			}
+
+			button, input {
+				font-family: inherit;
+			}
+		</style>
+
+		<template id="components">
+			<ink-enemy>
+				<!-- observed attributes -->
+				<script td-property="observedAttributes">
+					['burn', 'chill', 'poison', 'terror', 'frailty'];
+				</script>
+
+				<template shadowrootmode="open">
+					<style>
+						:host {
+							display: block;
+							width: 360px;
+							padding: 1em;
+							border: 3px solid;
+							border-radius: 1em;
+						}
+
+						button, input {
+							font-family: inherit;
+						}
+
+						p {
+							font-weight: 100;
+						}
+
+						strong {
+							font-weight: 500;
+						}
+
+						/* :host:has(:checked) {
+							border-color: #dedede
+						} */
+
+						section#controls {
+							display: flex;
+							flex-direction: column;
+							gap: 1em;
+						}
+
+						div {
+							display: flex;
+							justify-content: space-around;
+						}
+
+						:host([defeated]) {
+							opacity: 0.5;
+						}
+					</style>
+
+					<section id="controls">
+						<div>
+							<label>
+								Name:
+								<input id="name" type="text" placeholder="Snapping Shadow">
+							</label>
+						</div>
+						<div id="stats">
+							<label>
+								Stamina <input id="stamina" placeholder="4" size="2">
+							</label>
+							<label>
+								Damage <input id="damage" placeholder="7" size="2">
+								<span id="frailty-damage-debuff"></span>
+							</label>
+							<label>
+								Defense <input id="defense" placeholder="5" size="2">
+								<span id="frailty-defense-debuff"></span>
+							</label>
+						</div>
+						<div id="action-choice">
+							<label>
+								<input id="actionAttack" type="radio" name="Action" value="attack">
+								Attack
+							</label>
+							<label>
+								<input id="actionPower" type="radio" name="Action" value="power">
+								Power
+							</label>
+						</div>
+						<div id="tags">
+							<button data-tag="burn">+burn</button>
+							<button data-tag="chill">+chill</button>
+							<button data-tag="poison">+poison</button>
+							<button data-tag="terror">+terror</button>
+							<button data-tag="frailty">+frailty</button>
+						</div>
+					</section>
+
+					<ink-status-description id="inkStatus"></ink-status-description>
+				</template>
+
+				<!-- when we mount this component, add an event listener -->
+				<script td-method="connectedCallback">
+					const tagsSection = this.shadowRoot.querySelector('#tags');
+					[...tagsSection.querySelectorAll('button')].forEach((tagButton) => {
+						tagButton.addEventListener('click', () => {
+							const tag = tagButton.getAttribute('data-tag');
+							const currentTagValue = parseInt(this.getAttribute(tag));
+							const newTagValue = Math.min((currentTagValue || 0) + 1, 10)
+							this.setAttribute(tag, newTagValue);
+						})
+					})
+
+					this.shadowRoot.querySelector('#inkStatus').addEventListener('clear', (event) => {
+						const tagToClear = event.detail.tag;
+						this.removeAttribute(tagToClear);
+					})
+				</script>
+
+				<!-- when the tags updates, update the template -->
+				<script td-method="attributeChangedCallback">
+					const [name, oldValue, newValue] = arguments;
+					// copy attributes to inkStatus component
+					if (newValue) {
+						this.shadowRoot.querySelector('#inkStatus').setAttribute(name, newValue);
+					} else {
+						// removing attribute
+						this.shadowRoot.querySelector('#inkStatus').removeAttribute(name);
+					}
+
+					if (name === 'frailty') {
+						const parsedValue = parseInt(newValue);
+						if (parsedValue) {
+							this.shadowRoot.querySelector('#frailty-damage-debuff').innerHTML = `(-${parsedValue*2})`
+							this.shadowRoot.querySelector('#frailty-defense-debuff').innerHTML = `(-${parsedValue})`
+						} else {
+							this.shadowRoot.querySelector('#frailty-damage-debuff').innerHTML = ''
+							this.shadowRoot.querySelector('#frailty-defense-debuff').innerHTML = ''
+						}
+					}
+				</script>
+
+				<!-- custom method for resolving start of round checks -->
+				<script td-method="startRoundEffects">
+					// first, check if the enemy is already defeated
+					// (even if we would go to 0 after all these effects, it only matters if they are 0 before the start of the round)
+					const staminaInput = this.shadowRoot.querySelector('#stamina')
+					const stamina = parseInt(staminaInput.value || '0');
+					if (stamina <= 0) {
+						this.setAttribute('defeated', '')
+					} else {
+						// apply all damage from burn / poison
+						const burn = parseInt(this.getAttribute('burn'));
+						const burnDamage = burn ? 1 + Math.floor(burn/5)*2 : 0;
+						const poison = parseInt(this.getAttribute('poison') || '0')
+						staminaInput.value = stamina - (poison + burnDamage)
+
+						// reduce tags that wear off over time
+						const chill = parseInt(this.getAttribute('chill'))
+						if (chill) {
+							if (chill > 1) {
+								this.setAttribute('chill', chill - 1)
+							} else {
+								this.removeAttribute('chill')
+							}
+						}
+
+						if (poison) {
+							if (poison > 1) {
+								this.setAttribute('poison', poison - 1)
+							} else {
+								this.removeAttribute('poison')
+							}
+						}
+
+						const frailty = parseInt(this.getAttribute('frailty'))
+						if (frailty) {
+							if (frailty > 1) {
+								this.setAttribute('frailty', frailty - 1)
+							} else {
+								this.removeAttribute('frailty')
+							}
+						}
+
+						// unset any action that was selected
+						this.shadowRoot.querySelector('#actionAttack').checked = false;
+						this.shadowRoot.querySelector('#actionPower').checked = false;
+					}
+				</script>
+			</ink-enemy>
+		</template>
+
+		<script>
+			TramDeco.processTemplate(components);
+		</script>
+	</head>
+	<body>
+		<style>
+			#enemySet {
+				display: flex;
+				gap: 1em;
+				flex-wrap: wrap;
+			}
+			top-controls {
+				display: flex;
+				justify-content: space-between;
+				padding: 1em;
+			}
+		</style>
+
+		<top-controls>
+			<button id="addEnemyButton">Add Enemy</button>
+			<button id="nextRoundButton">Start Next Round</button>
+		</top-controls>
+		<div id="enemySet">
+			<ink-enemy></ink-enemy>
+		</div>
+
+		<script>
+			addEnemyButton.addEventListener('click', () => {
+				const newEnemy = document.createElement('ink-enemy');
+				enemySet.appendChild(newEnemy);
+			})
+
+			nextRoundButton.addEventListener('click', () => {
+				[...document.querySelectorAll('ink-enemy')].forEach((inkEnemy) => {
+					inkEnemy.startRoundEffects()
+				})
+			})
+		</script>
+	</body>
+</html>

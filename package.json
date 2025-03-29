@@ -1,0 +1,5 @@
+{
+	"scripts": {
+		"build": "cd components; npx tram-deco@6 export-components ink-status-description.html"
+	}
+}
