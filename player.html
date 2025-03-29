@@ -1,0 +1,155 @@
+<html>
+	<head>
+		<title>Ink Status Tracker</title>
+		<script src="https://unpkg.com/tram-deco@6"></script>
+		<script src="./components/ink-status-description.js"></script>
+
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Winky+Sans:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+
+		<style>
+			:root {
+				color-scheme: light dark;
+			}
+
+			body {
+				font-family: "Winky Sans", sans-serif;
+				font-optical-sizing: auto;
+				font-style: normal;
+			}
+
+			button, input {
+				font-family: inherit;
+			}
+		</style>
+
+		<template id="components">
+			<ink-player>
+				<!-- observed attributes -->
+				<script td-property="observedAttributes">
+					['burn', 'chill', 'poison', 'terror', 'frailty'];
+				</script>
+
+				<template shadowrootmode="open">
+					<style>
+						:host {
+							display: block;
+							width: 360px;
+							padding: 1em;
+							border: 3px solid;
+							border-radius: 1em;
+						}
+
+						button, input {
+							font-family: inherit;
+						}
+
+						p {
+							font-weight: 100;
+						}
+
+						strong {
+							font-weight: 500;
+						}
+
+						section#controls {
+							display: flex;
+							flex-direction: column;
+							gap: 1em;
+						}
+
+						div {
+							display: flex;
+							justify-content: space-around;
+						}
+					</style>
+
+					<section id="controls">
+						<div id="tags">
+							<button data-tag="burn">+burn</button>
+							<button data-tag="chill">+chill</button>
+							<button data-tag="poison">+poison</button>
+							<button data-tag="terror">+terror</button>
+							<button data-tag="frailty">+frailty</button>
+						</div>
+					</section>
+
+					<ink-status-description id="inkStatus" showEndOfRoundResults></ink-status-description>
+				</template>
+
+				<!-- when we mount this component, add an event listener -->
+				<script td-method="connectedCallback">
+					const tagsSection = this.shadowRoot.querySelector('#tags');
+					[...tagsSection.querySelectorAll('button')].forEach((tagButton) => {
+						tagButton.addEventListener('click', () => {
+							const tag = tagButton.getAttribute('data-tag');
+							const currentTagValue = parseInt(this.getAttribute(tag));
+							const newTagValue = Math.min((currentTagValue || 0) + 1, 10)
+							this.setAttribute(tag, newTagValue);
+						})
+					})
+
+					this.shadowRoot.querySelector('#inkStatus').addEventListener('clear', (event) => {
+						const tagToClear = event.detail.tag;
+						this.removeAttribute(tagToClear);
+					})
+
+					this.shadowRoot.querySelector('#inkStatus').addEventListener('updateTags', (event) => {
+						this.startRoundEffects();
+					})
+				</script>
+
+				<!-- when the tags updates, update the template -->
+				<script td-method="attributeChangedCallback">
+					const [name, oldValue, newValue] = arguments;
+					// copy attributes to inkStatus component
+					if (newValue) {
+						this.shadowRoot.querySelector('#inkStatus').setAttribute(name, newValue);
+					} else {
+						// removing attribute
+						this.shadowRoot.querySelector('#inkStatus').removeAttribute(name);
+					}
+				</script>
+
+				<!-- custom method for resolving start of round checks -->
+				<script td-method="startRoundEffects">
+					// reduce tags that wear off over time
+					const chill = parseInt(this.getAttribute('chill'))
+					if (chill) {
+						if (chill > 1) {
+							this.setAttribute('chill', chill - 1)
+						} else {
+							this.removeAttribute('chill')
+						}
+					}
+
+					const poison = parseInt(this.getAttribute('poison') || '0')
+					if (poison) {
+						if (poison > 1) {
+							this.setAttribute('poison', poison - 1)
+						} else {
+							this.removeAttribute('poison')
+						}
+					}
+
+					const frailty = parseInt(this.getAttribute('frailty'))
+					if (frailty) {
+						if (frailty > 1) {
+							this.setAttribute('frailty', frailty - 1)
+						} else {
+							this.removeAttribute('frailty')
+						}
+					}
+				</script>
+			</ink-player>
+		</template>
+
+		<script>
+			TramDeco.processTemplate(components);
+		</script>
+	</head>
+	<body>
+		<ink-player></ink-player>
+	</body>
+</html>
