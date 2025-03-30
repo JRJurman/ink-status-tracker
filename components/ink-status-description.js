@@ -22,6 +22,8 @@
 				border-radius: 0.5em;
 				line-height: 1em;
 				color: currentcolor;
+				background: #3b3b3b;
+				border: 0;
 			}
 
 			p {
