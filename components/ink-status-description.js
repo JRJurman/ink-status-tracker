@@ -13,6 +13,15 @@
 		<style>
 			button, input {
 				font-family: inherit;
+				font-size: inherit;
+			}
+
+			button {
+				padding: 0.3em;
+				appearance: none;
+				border-radius: 0.5em;
+				line-height: 1em;
+				color: currentcolor;
 			}
 
 			p {
@@ -24,8 +33,7 @@
 			}
 
 			.clear {
-				padding: 1px;
-				line-height: 1em;
+				padding: 0.1em 0.2em;
 			}
 
 			count-span::after {

@@ -1,6 +1,9 @@
 <html>
 	<head>
 		<title>Ink Status Tracker</title>
+
+		<meta name="viewport" content="width=device-width" />
+
 		<script src="https://unpkg.com/tram-deco@6"></script>
 		<script src="./components/ink-status-description.js"></script>
 
@@ -19,8 +22,17 @@
 				font-style: normal;
 			}
 
-			button, input {
+			button {
 				font-family: inherit;
+				font-size: inherit;
+			}
+
+			button {
+				padding: 0.3em;
+				appearance: none;
+				border-radius: 0.5em;
+				line-height: 1em;
+				color: currentcolor;
 			}
 		</style>
 
@@ -43,6 +55,19 @@
 
 						button, input {
 							font-family: inherit;
+						}
+
+						button {
+							font-family: inherit;
+							padding: 0.3em;
+							appearance: none;
+							border-radius: 0.5em;
+							line-height: 1em;
+							color: currentcolor;
+						}
+
+						* {
+							font-size: 1em;
 						}
 
 						p {

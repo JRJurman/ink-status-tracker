@@ -1,6 +1,9 @@
 <html>
 	<head>
 		<title>Ink Status Tracker</title>
+
+		<meta name="viewport" content="width=device-width" />
+
 		<script src="https://unpkg.com/tram-deco@6"></script>
 		<script src="./components/ink-status-description.js"></script>
 
@@ -17,10 +20,7 @@
 				font-family: "Winky Sans", sans-serif;
 				font-optical-sizing: auto;
 				font-style: normal;
-			}
-
-			button, input {
-				font-family: inherit;
+				margin: 0;
 			}
 		</style>
 
@@ -35,14 +35,22 @@
 					<style>
 						:host {
 							display: block;
-							width: 360px;
 							padding: 1em;
 							border: 3px solid;
 							border-radius: 1em;
 						}
 
-						button, input {
+						* {
+							font-size: 1em;
+						}
+
+						button {
 							font-family: inherit;
+							padding: 0.3em;
+							appearance: none;
+							border-radius: 0.5em;
+							line-height: 1em;
+							color: currentcolor;
 						}
 
 						p {
@@ -53,27 +61,21 @@
 							font-weight: 500;
 						}
 
-						section#controls {
-							display: flex;
-							flex-direction: column;
-							gap: 1em;
-						}
-
-						div {
+						#tags {
 							display: flex;
 							justify-content: space-around;
+							flex-wrap: wrap;
+							gap: 0.2em;
 						}
 					</style>
 
-					<section id="controls">
-						<div id="tags">
-							<button data-tag="burn">+burn</button>
-							<button data-tag="chill">+chill</button>
-							<button data-tag="poison">+poison</button>
-							<button data-tag="terror">+terror</button>
-							<button data-tag="frailty">+frailty</button>
-						</div>
-					</section>
+					<div id="tags">
+						<button data-tag="burn">+burn</button>
+						<button data-tag="chill">+chill</button>
+						<button data-tag="poison">+poison</button>
+						<button data-tag="terror">+terror</button>
+						<button data-tag="frailty">+frailty</button>
+					</div>
 
 					<ink-status-description id="inkStatus" showEndOfRoundResults></ink-status-description>
 				</template>
