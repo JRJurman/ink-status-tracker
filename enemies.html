@@ -12,6 +12,8 @@
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 		<link href="https://fonts.googleapis.com/css2?family=Winky+Sans:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
 
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+
 		<style>
 			:root {
 				color-scheme: dark;
@@ -43,10 +45,22 @@
 			<ink-enemy>
 				<!-- observed attributes -->
 				<script td-property="observedAttributes">
-					['burn', 'chill', 'poison', 'terror', 'frailty'];
+					['burn', 'chill', 'poison', 'terror', 'frailty', 'name', 'stamina', 'damage', 'defense'];
 				</script>
 
 				<template shadowrootmode="open">
+					<!-- font-icon styling -->
+					<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+					<style>
+						.material-symbols-outlined {
+							background: none;
+							line-height: 0.5em
+						}
+						.material-symbols-outlined:hover {
+							background: #3a3a3a;
+						}
+					</style>
+
 					<style>
 						:host {
 							display: block;
@@ -109,6 +123,8 @@
 								Name:
 								<input id="name" type="text" placeholder="Snapping Shadow">
 							</label>
+							<button aria-label="copy enemy" class="material-symbols-outlined copy">content_copy</button>
+							<button aria-label="remove enemy" class="material-symbols-outlined remove">close</button>
 						</div>
 						<div id="stats">
 							<label>
@@ -156,35 +172,63 @@
 							const newTagValue = Math.min((currentTagValue || 0) + 1, 10)
 							this.setAttribute(tag, newTagValue);
 						})
-					})
+					});
+
+					[...this.shadowRoot.querySelectorAll('input')].forEach(input => {
+						input.addEventListener('input', (event) => {
+							this.setAttribute(event.target.id, event.target.value);
+						});
+					});
 
 					this.shadowRoot.querySelector('#inkStatus').addEventListener('clear', (event) => {
 						const tagToClear = event.detail.tag;
 						this.removeAttribute(tagToClear);
-					})
+					});
+
+					this.shadowRoot.querySelector('.copy').addEventListener('click', () => {
+						this.dispatchEvent(
+							new CustomEvent("copy", {
+								bubbles: true,
+							}),
+						);
+					});
+
+					this.shadowRoot.querySelector('.remove').addEventListener('click', () => {
+						this.dispatchEvent(
+							new CustomEvent("remove", {
+								bubbles: true,
+							}),
+						);
+					});
 				</script>
 
 				<!-- when the tags updates, update the template -->
 				<script td-method="attributeChangedCallback">
 					const [name, oldValue, newValue] = arguments;
-					// copy attributes to inkStatus component
-					if (newValue) {
-						this.shadowRoot.querySelector('#inkStatus').setAttribute(name, newValue);
+					// check if this is a status inflictment updated
+					if (['burn', 'chill', 'poison', 'terror', 'frailty'].includes(name)) {
+						// copy attributes to inkStatus component
+						if (newValue) {
+							this.shadowRoot.querySelector('#inkStatus').setAttribute(name, newValue);
+						} else {
+							// removing attribute
+							this.shadowRoot.querySelector('#inkStatus').removeAttribute(name);
+						}
+
+						if (name === 'frailty') {
+							const parsedValue = parseInt(newValue);
+							if (parsedValue) {
+								this.shadowRoot.querySelector('#frailty-damage-debuff').innerHTML = `(-${parsedValue*2})`
+								this.shadowRoot.querySelector('#frailty-defense-debuff').innerHTML = `(-${parsedValue})`
+							} else {
+								this.shadowRoot.querySelector('#frailty-damage-debuff').innerHTML = ''
+								this.shadowRoot.querySelector('#frailty-defense-debuff').innerHTML = ''
+							}
+						}
 					} else {
-						// removing attribute
-						this.shadowRoot.querySelector('#inkStatus').removeAttribute(name);
+						this.shadowRoot.querySelector(`#${name}`).value = newValue;
 					}
 
-					if (name === 'frailty') {
-						const parsedValue = parseInt(newValue);
-						if (parsedValue) {
-							this.shadowRoot.querySelector('#frailty-damage-debuff').innerHTML = `(-${parsedValue*2})`
-							this.shadowRoot.querySelector('#frailty-defense-debuff').innerHTML = `(-${parsedValue})`
-						} else {
-							this.shadowRoot.querySelector('#frailty-damage-debuff').innerHTML = ''
-							this.shadowRoot.querySelector('#frailty-defense-debuff').innerHTML = ''
-						}
-					}
 				</script>
 
 				<!-- custom method for resolving start of round checks -->
@@ -267,13 +311,30 @@
 			addEnemyButton.addEventListener('click', () => {
 				const newEnemy = document.createElement('ink-enemy');
 				enemySet.appendChild(newEnemy);
-			})
+			});
 
 			nextRoundButton.addEventListener('click', () => {
 				[...document.querySelectorAll('ink-enemy')].forEach((inkEnemy) => {
 					inkEnemy.startRoundEffects()
-				})
-			})
+				});
+			});
+
+			enemySet.addEventListener('copy', (event) => {
+				const newEnemy = event.target.cloneNode(true)
+				enemySet.appendChild(newEnemy);
+			});
+
+			enemySet.addEventListener('remove', (event) => {
+				event.target.remove()
+			});
+
+			window.addEventListener("beforeunload", (event) => {
+				event.preventDefault();
+				const confirmationMessage = 'Enemy Data will be lost on leaving / reload.';
+
+				(event || window.event).returnValue = confirmationMessage;
+				return confirmationMessage;
+			});
 		</script>
 	</body>
 </html>

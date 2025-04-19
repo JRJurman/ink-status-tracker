@@ -195,7 +195,7 @@
 					}),
 				);
 			})
-		})
+		});
 
 		this.shadowRoot.querySelector('#updateTags').addEventListener('click', () => {
 			this.dispatchEvent(
@@ -203,7 +203,7 @@
 					bubbles: true,
 				}),
 			);
-		})
+		});
 	</script>
 </ink-status-description>
 `)
